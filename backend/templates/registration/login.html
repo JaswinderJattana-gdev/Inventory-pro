@@ -1,0 +1,11 @@
+{% extends "base.html" %}
+{% block title %}Login - Inventory Pro{% endblock %}
+
+{% block content %}
+<h1>Login</h1>
+<form method="post" style="display:grid;gap:12px;max-width:360px;">
+  {% csrf_token %}
+  {{ form.as_p }}
+  <button type="submit">Sign in</button>
+</form>
+{% endblock %}
