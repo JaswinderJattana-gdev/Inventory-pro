@@ -2,6 +2,73 @@
 {% block title %}Dashboard - Inventory Pro{% endblock %}
 
 {% block content %}
-<h1>Dashboard</h1>
-<p>This will show low stock, top moved items, and quick actions.</p>
+<div style="display:flex; align-items:center; gap:12px;">
+  <h1 style="margin:0;">Dashboard</h1>
+  <div style="margin-left:auto; display:flex; gap:10px;">
+    <a href="{% url 'inventory:product_list' %}">Products</a>
+    <a href="{% url 'inventory:product_create' %}">+ New Product</a>
+  </div>
+</div>
+
+<p style="color:#666; margin-top:8px;">
+  Snapshot of low stock and recent movement.
+</p>
+
+<div style="display:grid; grid-template-columns: 1fr 1fr; gap:16px; margin-top:16px;">
+  <section style="border:1px solid #ddd; border-radius:10px; padding:14px;">
+    <h2 style="margin-top:0;">Low Stock</h2>
+    {% if low_stock %}
+      <table border="1" cellpadding="8" cellspacing="0" style="width:100%; border-collapse:collapse;">
+        <thead>
+          <tr>
+            <th>Product</th>
+            <th>SKU</th>
+            <th>On hand</th>
+            <th>Reorder</th>
+            <th></th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for p in low_stock %}
+          <tr>
+            <td>{{ p.name }}</td>
+            <td>{{ p.sku }}</td>
+            <td>{{ p.quantity_on_hand }}</td>
+            <td>{{ p.reorder_level }}</td>
+            <td><a href="{% url 'inventory:product_detail' pk=p.id %}">View</a></td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    {% else %}
+      <p>No low stock items 🎉</p>
+    {% endif %}
+  </section>
+
+  <section style="border:1px solid #ddd; border-radius:10px; padding:14px;">
+    <h2 style="margin-top:0;">Top Moved (since {{ since }})</h2>
+    {% if movers %}
+      <table border="1" cellpadding="8" cellspacing="0" style="width:100%; border-collapse:collapse;">
+        <thead>
+          <tr>
+            <th>Product</th>
+            <th>SKU</th>
+            <th>Moved Qty</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for m in movers %}
+          <tr>
+            <td>{{ m.product__name }}</td>
+            <td>{{ m.product__sku }}</td>
+            <td>{{ m.moved_qty }}</td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    {% else %}
+      <p>No transactions in the last 30 days.</p>
+    {% endif %}
+  </section>
+</div>
 {% endblock %}
