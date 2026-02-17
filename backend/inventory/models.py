@@ -69,3 +69,24 @@ class InventoryTransaction(models.Model):
 
     def __str__(self):
         return f"{self.transaction_type} - {self.product.name} ({self.quantity})"
+
+class AuditLog(models.Model):
+    ACTIONS = (
+        ("PRODUCT_CREATE", "Product Created"),
+        ("PRODUCT_UPDATE", "Product Updated"),
+        ("STOCK_IN", "Stock In"),
+        ("STOCK_OUT", "Stock Out"),
+    )
+
+    actor = models.ForeignKey("auth.User", on_delete=models.SET_NULL, null=True, blank=True)
+    action = models.CharField(max_length=50, choices=ACTIONS)
+    entity_type = models.CharField(max_length=50)
+    entity_id = models.IntegerField()
+    message = models.CharField(max_length=255, blank=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        ordering = ["-created_at"]
+
+    def __str__(self):
+        return f"{self.action} {self.entity_type}#{self.entity_id}"

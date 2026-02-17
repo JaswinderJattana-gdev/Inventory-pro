@@ -13,6 +13,13 @@ from datetime import datetime
 from django.http import HttpResponse
 from django.utils.timezone import make_aware
 
+from reportlab.lib.pagesizes import letter
+from reportlab.pdfgen import canvas
+
+from core.permissions import require_group
+
+from .audit import log
+from .models import AuditLog
 class StockTransactionForm(forms.ModelForm):
     class Meta:
         model = InventoryTransaction
@@ -64,27 +71,27 @@ def product_list(request):
         },
     )
 
-
 @login_required
 def product_detail(request, pk):
     product = get_object_or_404(Product.objects.select_related("category"), pk=pk)
     transactions = product.transactions.all()
     return render(request, "inventory/product_detail.html", {"product": product, "transactions": transactions})
 
-
+@require_group("Admin")
 @login_required
 def product_create(request):
     if request.method == "POST":
         form = ProductForm(request.POST)
         if form.is_valid():
             product = form.save()
+            log(request.user, "PRODUCT_CREATE", "Product", product.id, f"Created {product.name} ({product.sku})")
             return redirect("inventory:product_detail", pk=product.pk)
     else:
         form = ProductForm()
 
     return render(request, "inventory/product_form.html", {"form": form, "mode": "create"})
 
-
+@require_group("Admin")
 @login_required
 def product_update(request, pk):
     product = get_object_or_404(Product, pk=pk)
@@ -93,6 +100,7 @@ def product_update(request, pk):
         form = ProductForm(request.POST, instance=product)
         if form.is_valid():
             product = form.save()
+            log(request.user, "PRODUCT_UPDATE", "Product", product.id, f"Updated {product.name} ({product.sku})")
             return redirect("inventory:product_detail", pk=product.pk)
     else:
         form = ProductForm(instance=product)
@@ -129,6 +137,8 @@ def stock_transaction(request, pk):
 
                 product.save()
                 tx.save()
+                action = "STOCK_IN" if tx.transaction_type == "IN" else "STOCK_OUT"
+                log(request.user, action, "Product", product.id, f"{action} {tx.quantity} for {product.sku}")
 
             return redirect("inventory:product_detail", pk=product.pk)
     else:
@@ -226,3 +236,78 @@ def export_transactions_csv(request):
         ])
 
     return response
+
+@login_required
+def export_transactions_pdf(request):
+    start = _parse_date(request.GET.get("start", ""))
+    end = _parse_date(request.GET.get("end", ""))
+
+    qs = InventoryTransaction.objects.select_related("product", "created_by").order_by("-created_at")
+    if start:
+        qs = qs.filter(created_at__gte=start)
+    if end:
+        qs = qs.filter(created_at__lte=end.replace(hour=23, minute=59, second=59))
+
+    response = HttpResponse(content_type="application/pdf")
+    response["Content-Disposition"] = 'attachment; filename="transactions.pdf"'
+
+    c = canvas.Canvas(response, pagesize=letter)
+    width, height = letter
+
+    y = height - 50
+    c.setFont("Helvetica-Bold", 14)
+    c.drawString(50, y, "Inventory Transactions Report")
+    y -= 20
+
+    c.setFont("Helvetica", 10)
+    date_line = "All time"
+    if start and end:
+        date_line = f"From {start.date()} to {end.date()}"
+    elif start:
+        date_line = f"From {start.date()}"
+    elif end:
+        date_line = f"Up to {end.date()}"
+
+    c.drawString(50, y, date_line)
+    y -= 25
+
+    # Column headers
+    c.setFont("Helvetica-Bold", 9)
+    c.drawString(50, y, "Date")
+    c.drawString(150, y, "Type")
+    c.drawString(200, y, "SKU")
+    c.drawString(280, y, "Product")
+    c.drawString(470, y, "Qty")
+    y -= 15
+
+    c.setFont("Helvetica", 9)
+
+    for t in qs[:500]:  # cap to keep pdf sane
+        if y < 60:
+            c.showPage()
+            y = height - 50
+            c.setFont("Helvetica-Bold", 9)
+            c.drawString(50, y, "Date")
+            c.drawString(150, y, "Type")
+            c.drawString(200, y, "SKU")
+            c.drawString(280, y, "Product")
+            c.drawString(470, y, "Qty")
+            y -= 15
+            c.setFont("Helvetica", 9)
+
+        c.drawString(50, y, t.created_at.strftime("%Y-%m-%d"))
+        c.drawString(150, y, t.transaction_type)
+        c.drawString(200, y, t.product.sku[:12])
+        c.drawString(280, y, t.product.name[:30])
+        c.drawRightString(495, y, str(t.quantity))
+        y -= 14
+
+    c.showPage()
+    c.save()
+    return response
+
+@require_group("Admin")
+@login_required
+def audit_list(request):
+    logs = AuditLog.objects.select_related("actor").all()[:200]
+    return render(request, "inventory/audit_list.html", {"logs": logs})

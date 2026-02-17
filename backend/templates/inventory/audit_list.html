@@ -1,0 +1,32 @@
+{% extends "base.html" %}
+{% block title %}Audit Logs - Inventory Pro{% endblock %}
+
+{% block content %}
+<h1>Audit Logs</h1>
+<p style="color:#666;">Most recent 200 actions.</p>
+
+<table border="1" cellpadding="8" cellspacing="0" style="width:100%; border-collapse:collapse;">
+  <thead>
+    <tr>
+      <th>Time</th>
+      <th>User</th>
+      <th>Action</th>
+      <th>Entity</th>
+      <th>Message</th>
+    </tr>
+  </thead>
+  <tbody>
+    {% for a in logs %}
+      <tr>
+        <td>{{ a.created_at }}</td>
+        <td>{% if a.actor %}{{ a.actor.username }}{% endif %}</td>
+        <td>{{ a.action }}</td>
+        <td>{{ a.entity_type }} #{{ a.entity_id }}</td>
+        <td>{{ a.message }}</td>
+      </tr>
+    {% empty %}
+      <tr><td colspan="5">No logs yet.</td></tr>
+    {% endfor %}
+  </tbody>
+</table>
+{% endblock %}

@@ -26,5 +26,22 @@
     </div>
     <button type="submit">Download transactions.csv</button>
   </form>
+
+  <div style="margin-top:10px;">
+    <a href="{% url 'inventory:export_transactions_pdf' %}">
+        Download transactions.pdf
+    </a>
+  </div>
+  <form method="get" action="{% url 'inventory:export_transactions_pdf' %}" style="display:flex; gap:12px; flex-wrap:wrap; align-items:end; margin-top:10px;">
+  <div>
+    <label>Start date</label><br/>
+    <input type="date" name="start" />
+  </div>
+  <div>
+    <label>End date</label><br/>
+    <input type="date" name="end" />
+  </div>
+  <button type="submit">Download transactions.pdf</button>
+  </form>
 </section>
 {% endblock %}

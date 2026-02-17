@@ -12,4 +12,6 @@ urlpatterns = [
     path("reports/", views.reports_home, name="reports_home"),
     path("reports/products.csv", views.export_products_csv, name="export_products_csv"),
     path("reports/transactions.csv", views.export_transactions_csv, name="export_transactions_csv"),
+    path("reports/transactions.pdf", views.export_transactions_pdf, name="export_transactions_pdf"),
+    path("audit/", views.audit_list, name="audit_list"),
 ]
