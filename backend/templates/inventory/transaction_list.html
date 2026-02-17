@@ -1,0 +1,69 @@
+{% extends "base.html" %}
+{% block title %}Transactions - Inventory Pro{% endblock %}
+
+{% block content %}
+<div style="display:flex; align-items:center; gap:12px;">
+  <h1 style="margin:0;">Transactions</h1>
+  <div style="margin-left:auto;">
+    <a href="{% url 'inventory:reports_home' %}">Exports</a>
+  </div>
+</div>
+
+<form method="get" style="display:flex; gap:12px; flex-wrap:wrap; align-items:end; margin:12px 0;">
+  <div>
+    <label>Search</label><br/>
+    <input name="q" value="{{ q }}" placeholder="SKU, product, reference..." />
+  </div>
+
+  <div>
+    <label>Type</label><br/>
+    <select name="type">
+      <option value="" {% if not tx_type %}selected{% endif %}>All</option>
+      <option value="IN" {% if tx_type == "IN" %}selected{% endif %}>IN</option>
+      <option value="OUT" {% if tx_type == "OUT" %}selected{% endif %}>OUT</option>
+    </select>
+  </div>
+
+  <div>
+    <label>Start</label><br/>
+    <input type="date" name="start" value="{{ start }}" />
+  </div>
+
+  <div>
+    <label>End</label><br/>
+    <input type="date" name="end" value="{{ end }}" />
+  </div>
+
+  <button type="submit">Apply</button>
+  <a href="{% url 'inventory:transaction_list' %}">Reset</a>
+</form>
+
+<table border="1" cellpadding="8" cellspacing="0" style="width:100%; border-collapse:collapse;">
+  <thead>
+    <tr>
+      <th>Date</th>
+      <th>Type</th>
+      <th>SKU</th>
+      <th>Product</th>
+      <th>Qty</th>
+      <th>Reference</th>
+      <th>User</th>
+    </tr>
+  </thead>
+  <tbody>
+    {% for t in transactions %}
+      <tr>
+        <td>{{ t.created_at }}</td>
+        <td>{{ t.transaction_type }}</td>
+        <td>{{ t.product.sku }}</td>
+        <td><a href="{% url 'inventory:product_detail' pk=t.product.id %}">{{ t.product.name }}</a></td>
+        <td>{{ t.quantity }}</td>
+        <td>{{ t.reference }}</td>
+        <td>{% if t.created_by %}{{ t.created_by.username }}{% endif %}</td>
+      </tr>
+    {% empty %}
+      <tr><td colspan="7">No transactions found.</td></tr>
+    {% endfor %}
+  </tbody>
+</table>
+{% endblock %}

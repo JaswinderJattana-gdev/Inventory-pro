@@ -20,6 +20,8 @@ from core.permissions import require_group
 
 from .audit import log
 from .models import AuditLog
+
+from django.db.models import Q
 class StockTransactionForm(forms.ModelForm):
     class Meta:
         model = InventoryTransaction
@@ -74,7 +76,7 @@ def product_list(request):
 @login_required
 def product_detail(request, pk):
     product = get_object_or_404(Product.objects.select_related("category"), pk=pk)
-    transactions = product.transactions.all()
+    transactions = product.transactions.all() [:10]
     return render(request, "inventory/product_detail.html", {"product": product, "transactions": transactions})
 
 @require_group("Admin")
@@ -311,3 +313,36 @@ def export_transactions_pdf(request):
 def audit_list(request):
     logs = AuditLog.objects.select_related("actor").all()[:200]
     return render(request, "inventory/audit_list.html", {"logs": logs})
+
+@login_required
+def transaction_list(request):
+    q = request.GET.get("q", "").strip()
+    tx_type = request.GET.get("type", "").strip()  # IN / OUT / empty
+    start = _parse_date(request.GET.get("start", ""))
+    end = _parse_date(request.GET.get("end", ""))
+
+    qs = InventoryTransaction.objects.select_related("product", "created_by").order_by("-created_at")
+
+    if q:
+        qs = qs.filter(
+            Q(product__name__icontains=q) |
+            Q(product__sku__icontains=q) |
+            Q(reference__icontains=q)
+        )
+
+    if tx_type in ("IN", "OUT"):
+        qs = qs.filter(transaction_type=tx_type)
+
+    if start:
+        qs = qs.filter(created_at__gte=start)
+    if end:
+        qs = qs.filter(created_at__lte=end.replace(hour=23, minute=59, second=59))
+
+    # Keep it simple for now (later: pagination)
+    qs = qs[:200]
+
+    return render(
+        request,
+        "inventory/transaction_list.html",
+        {"transactions": qs, "q": q, "tx_type": tx_type, "start": request.GET.get("start",""), "end": request.GET.get("end","")},
+    )
