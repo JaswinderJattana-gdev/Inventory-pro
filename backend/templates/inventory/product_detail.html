@@ -8,6 +8,7 @@
 
   <div style="margin-left:auto; display:flex; gap:8px;">
     <a href="{% url 'inventory:product_update' pk=product.id %}">Edit</a>
+    <a href="{% url 'inventory:stock_transaction' pk=product.id %}">Stock In / Out</a>
     <a href="{% url 'inventory:product_list' %}">Back</a>
   </div>
 </div>

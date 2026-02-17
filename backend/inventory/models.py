@@ -37,3 +37,35 @@ class Product(models.Model):
 
     def __str__(self):
         return f"{self.name} ({self.sku})"
+
+class InventoryTransaction(models.Model):
+    TRANSACTION_TYPES = (
+        ("IN", "Stock In"),
+        ("OUT", "Stock Out"),
+    )
+
+    product = models.ForeignKey(
+        Product,
+        on_delete=models.CASCADE,
+        related_name="transactions"
+    )
+
+    transaction_type = models.CharField(max_length=3, choices=TRANSACTION_TYPES)
+    quantity = models.PositiveIntegerField()
+    reference = models.CharField(max_length=100, blank=True)
+    note = models.TextField(blank=True)
+
+    created_by = models.ForeignKey(
+        "auth.User",
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True
+    )
+
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        ordering = ["-created_at"]
+
+    def __str__(self):
+        return f"{self.transaction_type} - {self.product.name} ({self.quantity})"
