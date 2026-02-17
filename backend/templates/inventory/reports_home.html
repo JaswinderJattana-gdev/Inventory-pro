@@ -1,0 +1,30 @@
+{% extends "base.html" %}
+{% block title %}Reports - Inventory Pro{% endblock %}
+
+{% block content %}
+<h1>Reports</h1>
+<p style="color:#666;">Export CSV reports for inventory and transactions.</p>
+
+<section style="border:1px solid #ddd; border-radius:10px; padding:14px; margin-bottom:16px;">
+  <h2 style="margin-top:0;">Products Export</h2>
+  <p>Download a CSV of all products with pricing and stock levels.</p>
+  <a href="{% url 'inventory:export_products_csv' %}">Download products.csv</a>
+</section>
+
+<section style="border:1px solid #ddd; border-radius:10px; padding:14px;">
+  <h2 style="margin-top:0;">Transactions Export</h2>
+  <p>Download a CSV of stock in/out history. Optionally filter by date range.</p>
+
+  <form method="get" action="{% url 'inventory:export_transactions_csv' %}" style="display:flex; gap:12px; flex-wrap:wrap; align-items:end;">
+    <div>
+      <label>Start date</label><br/>
+      <input type="date" name="start" />
+    </div>
+    <div>
+      <label>End date</label><br/>
+      <input type="date" name="end" />
+    </div>
+    <button type="submit">Download transactions.csv</button>
+  </form>
+</section>
+{% endblock %}

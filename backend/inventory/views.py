@@ -8,6 +8,11 @@ from django.shortcuts import get_object_or_404, redirect, render
 from .forms import ProductForm
 from .models import Product, Category
 
+import csv
+from datetime import datetime
+from django.http import HttpResponse
+from django.utils.timezone import make_aware
+
 class StockTransactionForm(forms.ModelForm):
     class Meta:
         model = InventoryTransaction
@@ -134,3 +139,90 @@ def stock_transaction(request, pk):
         "inventory/stock_form.html",
         {"form": form, "product": product},
     )
+
+@login_required
+def reports_home(request):
+    # default range: last 30 days
+    return render(request, "inventory/reports_home.html")
+
+
+@login_required
+def export_products_csv(request):
+    response = HttpResponse(content_type="text/csv")
+    response["Content-Disposition"] = 'attachment; filename="products.csv"'
+
+    writer = csv.writer(response)
+    writer.writerow([
+        "SKU", "Name", "Category", "Cost", "Price",
+        "Qty On Hand", "Reorder Level", "Active", "Created", "Updated"
+    ])
+
+    qs = Product.objects.select_related("category").order_by("name")
+
+    for p in qs:
+        writer.writerow([
+            p.sku,
+            p.name,
+            p.category.name,
+            f"{p.cost:.2f}",
+            f"{p.price:.2f}",
+            p.quantity_on_hand,
+            p.reorder_level,
+            "Yes" if p.is_active else "No",
+            p.created_at.isoformat(),
+            p.updated_at.isoformat(),
+        ])
+
+    return response
+
+
+def _parse_date(value: str):
+    """
+    Parses YYYY-MM-DD into an aware datetime at 00:00 local time.
+    Returns None if empty/invalid.
+    """
+    if not value:
+        return None
+    try:
+        dt = datetime.strptime(value, "%Y-%m-%d")
+        return make_aware(dt)
+    except ValueError:
+        return None
+
+
+@login_required
+def export_transactions_csv(request):
+    # Optional filters
+    start = _parse_date(request.GET.get("start", ""))
+    end = _parse_date(request.GET.get("end", ""))
+
+    response = HttpResponse(content_type="text/csv")
+    response["Content-Disposition"] = 'attachment; filename="transactions.csv"'
+
+    writer = csv.writer(response)
+    writer.writerow([
+        "Date", "Type", "SKU", "Product",
+        "Quantity", "Reference", "Note", "User"
+    ])
+
+    qs = InventoryTransaction.objects.select_related("product", "created_by").order_by("-created_at")
+
+    if start:
+        qs = qs.filter(created_at__gte=start)
+    if end:
+        # include the entire end day by adding 1 day and using lt
+        qs = qs.filter(created_at__lt=end.replace(hour=23, minute=59, second=59))
+
+    for t in qs:
+        writer.writerow([
+            t.created_at.isoformat(),
+            t.transaction_type,
+            t.product.sku,
+            t.product.name,
+            t.quantity,
+            t.reference,
+            t.note,
+            t.created_by.username if t.created_by else "",
+        ])
+
+    return response
