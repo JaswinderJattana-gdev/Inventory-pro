@@ -22,6 +22,10 @@ from .audit import log
 from .models import AuditLog
 
 from django.db.models import Q
+from django.db.models import Count
+from .forms import CategoryForm
+from core.permissions import require_group
+
 class StockTransactionForm(forms.ModelForm):
     class Meta:
         model = InventoryTransaction
@@ -345,4 +349,47 @@ def transaction_list(request):
         request,
         "inventory/transaction_list.html",
         {"transactions": qs, "q": q, "tx_type": tx_type, "start": request.GET.get("start",""), "end": request.GET.get("end","")},
+    )
+
+@login_required
+def category_list(request):
+    categories = (
+        Category.objects
+        .annotate(product_count=Count("products"))
+        .order_by("name")
+    )
+    return render(request, "inventory/category_list.html", {"categories": categories})
+
+
+@require_group("Admin")
+@login_required
+def category_create(request):
+    if request.method == "POST":
+        form = CategoryForm(request.POST)
+        if form.is_valid():
+            form.save()
+            return redirect("inventory:category_list")
+    else:
+        form = CategoryForm()
+
+    return render(request, "inventory/category_form.html", {"form": form, "mode": "create"})
+
+
+@require_group("Admin")
+@login_required
+def category_update(request, pk):
+    category = get_object_or_404(Category, pk=pk)
+
+    if request.method == "POST":
+        form = CategoryForm(request.POST, instance=category)
+        if form.is_valid():
+            form.save()
+            return redirect("inventory:category_list")
+    else:
+        form = CategoryForm(instance=category)
+
+    return render(
+        request,
+        "inventory/category_form.html",
+        {"form": form, "mode": "edit", "category": category},
     )

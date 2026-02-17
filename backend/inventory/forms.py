@@ -1,6 +1,6 @@
 from django import forms
 from .models import Product
-
+from .models import Category
 
 class ProductForm(forms.ModelForm):
     class Meta:
@@ -34,3 +34,14 @@ class ProductForm(forms.ModelForm):
             self.add_error("reorder_level", "Reorder level cannot be negative.")
 
         return cleaned
+
+class CategoryForm(forms.ModelForm):
+    class Meta:
+        model = Category
+        fields = ["name"]
+
+    def clean_name(self):
+        name = (self.cleaned_data.get("name") or "").strip()
+        if len(name) < 2:
+            raise forms.ValidationError("Category name must be at least 2 characters.")
+        return name

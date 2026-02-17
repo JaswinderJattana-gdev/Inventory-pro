@@ -1,0 +1,15 @@
+{% extends "base.html" %}
+{% block title %}{% if mode == "create" %}New Category{% else %}Edit Category{% endif %} - Inventory Pro{% endblock %}
+
+{% block content %}
+<h1>{% if mode == "create" %}New Category{% else %}Edit Category{% endif %}</h1>
+
+<form method="post" style="display:grid; gap:12px; max-width:420px;">
+  {% csrf_token %}
+  {{ form.as_p }}
+  <div style="display:flex; gap:10px;">
+    <button type="submit">Save</button>
+    <a href="{% url 'inventory:category_list' %}">Cancel</a>
+  </div>
+</form>
+{% endblock %}

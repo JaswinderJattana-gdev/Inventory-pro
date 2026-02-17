@@ -15,4 +15,7 @@ urlpatterns = [
     path("reports/transactions.pdf", views.export_transactions_pdf, name="export_transactions_pdf"),
     path("audit/", views.audit_list, name="audit_list"),
     path("transactions/", views.transaction_list, name="transaction_list"),
+    path("categories/", views.category_list, name="category_list"),
+    path("categories/new/", views.category_create, name="category_create"),
+    path("categories/<int:pk>/edit/", views.category_update, name="category_update"),
 ]
