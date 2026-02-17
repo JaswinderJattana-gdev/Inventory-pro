@@ -1,0 +1,21 @@
+{% extends "base.html" %}
+{% block title %}{% if mode == "create" %}New Product{% else %}Edit Product{% endif %} - Inventory Pro{% endblock %}
+
+{% block content %}
+<h1>
+  {% if mode == "create" %}New Product{% else %}Edit Product{% endif %}
+</h1>
+
+<form method="post" style="display:grid; gap:12px; max-width:520px;">
+  {% csrf_token %}
+  {{ form.as_p }}
+  <div style="display:flex; gap:10px;">
+    <button type="submit">Save</button>
+    {% if mode == "edit" %}
+      <a href="{% url 'inventory:product_detail' pk=product.id %}">Cancel</a>
+    {% else %}
+      <a href="{% url 'inventory:product_list' %}">Cancel</a>
+    {% endif %}
+  </div>
+</form>
+{% endblock %}

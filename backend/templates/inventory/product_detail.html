@@ -1,0 +1,29 @@
+{% extends "base.html" %}
+{% block title %}{{ product.name }} - Inventory Pro{% endblock %}
+
+{% block content %}
+<div style="display:flex; align-items:center; gap:12px;">
+  <h1 style="margin:0;">{{ product.name }}</h1>
+  <span style="color:#666;">({{ product.sku }})</span>
+
+  <div style="margin-left:auto; display:flex; gap:8px;">
+    <a href="{% url 'inventory:product_update' pk=product.id %}">Edit</a>
+    <a href="{% url 'inventory:product_list' %}">Back</a>
+  </div>
+</div>
+
+<hr/>
+
+<ul>
+  <li><b>Category:</b> {{ product.category.name }}</li>
+  <li><b>Cost:</b> {{ product.cost }}</li>
+  <li><b>Price:</b> {{ product.price }}</li>
+  <li><b>On hand:</b> {{ product.quantity_on_hand }}</li>
+  <li><b>Reorder level:</b> {{ product.reorder_level }}</li>
+  <li><b>Status:</b> {% if product.is_active %}Active{% else %}Inactive{% endif %}</li>
+</ul>
+
+<p style="color:#666;">
+  Created {{ product.created_at }} • Updated {{ product.updated_at }}
+</p>
+{% endblock %}

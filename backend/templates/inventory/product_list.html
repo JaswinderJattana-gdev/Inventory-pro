@@ -1,0 +1,70 @@
+{% extends "base.html" %}
+{% block title %}Products - Inventory Pro{% endblock %}
+
+{% block content %}
+<h1>Products</h1>
+
+<div style="display:flex; gap:12px; align-items:center; margin-bottom:12px;">
+  <form method="get" style="display:flex; gap:8px; flex-wrap:wrap;">
+    <input name="q" placeholder="Search name or SKU" value="{{ q }}" />
+
+    <select name="category">
+      <option value="">All categories</option>
+      {% for c in categories %}
+        <option value="{{ c.id }}" {% if category_id|default:"" == c.id|stringformat:"s" %}selected{% endif %}>
+          {{ c.name }}
+        </option>
+      {% endfor %}
+    </select>
+
+    <select name="active">
+      <option value="1" {% if active == "1" %}selected{% endif %}>Active</option>
+      <option value="0" {% if active == "0" %}selected{% endif %}>Inactive</option>
+      <option value="all" {% if active == "all" %}selected{% endif %}>All</option>
+    </select>
+
+    <label>
+      <input type="checkbox" name="low_stock" value="1" {% if low_stock %}checked{% endif %} />
+      Low stock only
+    </label>
+
+    <button type="submit">Apply</button>
+    <a href="{% url 'inventory:product_list' %}">Reset</a>
+  </form>
+
+  <div style="margin-left:auto;">
+    <a href="{% url 'inventory:product_create' %}">+ New Product</a>
+  </div>
+</div>
+
+<table border="1" cellpadding="8" cellspacing="0" style="width:100%; border-collapse:collapse;">
+  <thead>
+    <tr>
+      <th>Name</th>
+      <th>SKU</th>
+      <th>Category</th>
+      <th>On hand</th>
+      <th>Reorder</th>
+      <th>Price</th>
+      <th></th>
+    </tr>
+  </thead>
+  <tbody>
+    {% for p in products %}
+      <tr>
+        <td>{{ p.name }}</td>
+        <td>{{ p.sku }}</td>
+        <td>{{ p.category.name }}</td>
+        <td>{{ p.quantity_on_hand }}</td>
+        <td>{{ p.reorder_level }}</td>
+        <td>{{ p.price }}</td>
+        <td>
+          <a href="{% url 'inventory:product_detail' pk=p.id %}">View</a>
+        </td>
+      </tr>
+    {% empty %}
+      <tr><td colspan="7">No products found.</td></tr>
+    {% endfor %}
+  </tbody>
+</table>
+{% endblock %}
