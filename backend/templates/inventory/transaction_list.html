@@ -51,7 +51,7 @@
     </tr>
   </thead>
   <tbody>
-    {% for t in transactions %}
+    {% for t in page_obj %}
       <tr>
         <td>{{ t.created_at }}</td>
         <td>{{ t.transaction_type }}</td>
@@ -66,4 +66,16 @@
     {% endfor %}
   </tbody>
 </table>
+<div style="margin-top:12px; display:flex; gap:12px; align-items:center;">
+  {% if page_obj.has_previous %}
+    <a href="?q={{ q }}&type={{ tx_type }}&start={{ start }}&end={{ end }}&page={{ page_obj.previous_page_number }}">Previous</a>
+  {% endif %}
+
+  <span>Page {{ page_obj.number }} of {{ page_obj.paginator.num_pages }}</span>
+
+  {% if page_obj.has_next %}
+    <a href="?q={{ q }}&type={{ tx_type }}&start={{ start }}&end={{ end }}&page={{ page_obj.next_page_number }}">Next</a>
+  {% endif %}
+</div>
+
 {% endblock %}

@@ -26,6 +26,8 @@ from django.db.models import Count
 from .forms import CategoryForm
 from core.permissions import require_group
 
+from django.core.paginator import Paginator
+
 class StockTransactionForm(forms.ModelForm):
     class Meta:
         model = InventoryTransaction
@@ -64,17 +66,21 @@ def product_list(request):
 
     categories = Category.objects.order_by("name")
 
+    paginator = Paginator(products, 10)  # 10 per page
+    page_number = request.GET.get("page")
+    page_obj = paginator.get_page(page_number)
+
     return render(
-        request,
-        "inventory/product_list.html",
-        {
-            "products": products,
-            "categories": categories,
-            "q": q,
-            "category_id": category_id,
-            "low_stock": low_stock,
-            "active": active,
-        },
+    request,
+    "inventory/product_list.html",
+    {
+        "page_obj": page_obj,
+        "categories": categories,
+        "q": q,
+        "category_id": category_id,
+        "low_stock": low_stock,
+        "active": active,
+    },
     )
 
 @login_required
@@ -342,13 +348,20 @@ def transaction_list(request):
     if end:
         qs = qs.filter(created_at__lte=end.replace(hour=23, minute=59, second=59))
 
-    # Keep it simple for now (later: pagination)
-    qs = qs[:200]
+    paginator = Paginator(qs, 15)  # 15 per page
+    page_number = request.GET.get("page")
+    page_obj = paginator.get_page(page_number)
 
     return render(
         request,
         "inventory/transaction_list.html",
-        {"transactions": qs, "q": q, "tx_type": tx_type, "start": request.GET.get("start",""), "end": request.GET.get("end","")},
+        {
+            "page_obj": page_obj,
+            "q": q,
+            "tx_type": tx_type,
+            "start": request.GET.get("start", ""),
+            "end": request.GET.get("end", ""),
+        },
     )
 
 @login_required
