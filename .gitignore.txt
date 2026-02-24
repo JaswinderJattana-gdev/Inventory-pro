@@ -1,12 +1,19 @@
+# Force ignore virtualenvs 
+**/.venv/
+**/venv/
+
 # Python
 __pycache__/
 *.py[cod]
 *.pyd
 *.pyo
+*.pyc
 *.egg-info/
 .env
 .venv/
 venv/
+backend/.venv/
+ENV/
 
 # Django
 db.sqlite3
