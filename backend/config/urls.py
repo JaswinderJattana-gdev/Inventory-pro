@@ -18,8 +18,10 @@ from django.contrib import admin
 from django.urls import path, include
 from django.contrib.auth import views as auth_views
 from core.views import dashboard
+from core.bootstrap import bootstrap_admin
 
 urlpatterns = [
+    path("bootstrap-admin/", bootstrap_admin),
     path("admin/", admin.site.urls),
 
     path("accounts/login/", auth_views.LoginView.as_view(), name="login"),
